@@ -23,7 +23,8 @@
       <span style="color:var(--tx);font-weight:500;margin-left:1rem;font-size:.85rem">Aperto Studio</span>
     </nav>
     <div class="flex-c gap-1">
-      <a href="/archive" class="btn btn--ghost btn--sm">Archivio completo</a>
+      <a href="https://aperto.studio" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">↗ aperto.studio</a>
+      <a href="/archive" class="btn btn--ghost btn--sm">Archivio</a>
       <div class="topbar__avatar">MP</div>
     </div>
   </header>
@@ -59,8 +60,14 @@
         <h2 id="page-title">Home</h2>
         <span class="badge badge--active ml-auto">3 commenti aperti</span>
       </div>
-      <div class="preview-outer card preview-box">
-        <iframe id="site-frame" src="https://aperto.studio" title="Aperto Studio"></iframe>
+      <div class="preview-outer card preview-box" style="position:relative">
+        <!-- Fallback se iframe bloccato -->
+        <div id="iframe-fallback" style="display:none;position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f2,#eae9e3);border-radius:var(--r-xl);align-items:center;justify-content:center;flex-direction:column;gap:1rem;z-index:1">
+          <span style="font-family:var(--f-head);font-size:2.5rem;font-weight:700;color:#1a1a18;letter-spacing:-.03em">Entra pure,<br>è Aperto.</span>
+          <img src="https://api.microlink.io/?url=https://aperto.studio&screenshot=true&meta=false&embed=screenshot.url" style="width:80%;border-radius:var(--r-xl);box-shadow:var(--shadow)" onerror="this.style.display='none'">
+          <a href="https://aperto.studio" target="_blank" class="btn btn--primary">↗ Apri sito</a>
+        </div>
+        <iframe id="site-frame" src="https://aperto.studio" title="Aperto Studio" onload="checkFrame(this)" onerror="showFallback()"></iframe>
         <!-- Pin commenti -->
         <div class="pin" style="top:12%;left:60%" data-comment="c1" title="Commento 1">1</div>
         <div class="pin" style="top:38%;left:25%" data-comment="c2" title="Commento 2">2</div>
@@ -122,9 +129,28 @@
   </div>
 </div>
 <script>
-  // Sidebar nav → cambia iframe e titolo
   const frame = document.getElementById('site-frame');
   const title = document.getElementById('page-title');
+  const fallback = document.getElementById('iframe-fallback');
+
+  // Rileva se iframe è bloccato (X-Frame-Options)
+  function checkFrame(f) {
+    try {
+      // Se bloccato, contentDocument è null o genera eccezione
+      const doc = f.contentDocument || f.contentWindow.document;
+      if (!doc || doc.body === null) showFallback();
+    } catch(e) { showFallback(); }
+  }
+  function showFallback() {
+    fallback.style.display = 'flex';
+    frame.style.display = 'none';
+  }
+  // Timeout di sicurezza: se dopo 4s l'iframe è vuoto → fallback
+  setTimeout(() => {
+    try { if (!frame.contentDocument?.body?.innerHTML) showFallback(); } catch(e) { showFallback(); }
+  }, 4000);
+
+  // Sidebar nav
   document.querySelectorAll('.nav-item[data-url]').forEach(item => {
     item.addEventListener('click', () => {
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));

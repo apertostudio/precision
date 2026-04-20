@@ -1,0 +1,15 @@
+[[redirects]]
+  from = "/project"
+  to   = "/project.html"
+  status = 200
+
+[[redirects]]
+  from = "/archive"
+  to   = "/archive.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
