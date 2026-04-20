@@ -5,19 +5,18 @@
   <title>Precision — Aperto Studio</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Layout a 3 colonne, occupa tutto lo schermo */
+    /* Layout 2 colonne: preview | commenti */
     .project-layout {
       display: grid;
-      grid-template-columns: 220px 1fr 300px;
+      grid-template-columns: 1fr 300px;
       height: calc(100vh - 52px);
       overflow: hidden;
     }
-    /* Sidebar e panel scrollano internamente */
-    .sidebar, .comment-panel {
+
+    /* Pannello commenti */
+    .comment-panel {
       overflow-y: auto;
       height: 100%;
-    }
-    .comment-panel {
       background: var(--s-low);
       padding: 1.25rem;
       display: flex; flex-direction: column; gap: .75rem;
@@ -31,12 +30,13 @@
       gap: .75rem;
     }
 
-    /* Barra superiore preview: titolo + mode toggle */
+    /* Toolbar: titolo + toggle + badge */
     .preview-toolbar {
       display: flex; align-items: center; gap: .75rem;
       flex-shrink: 0;
     }
-    /* Toggle modale */
+
+    /* Mode toggle */
     .mode-toggle {
       display: flex; background: var(--s-high);
       border-radius: var(--r-lg); padding: 3px; gap: 2px;
@@ -54,7 +54,7 @@
       box-shadow: var(--shadow);
     }
 
-    /* Box preview: è lui stesso il container scrollabile */
+    /* Preview box — è lui il container scrollabile */
     .preview-box {
       flex: 1;
       position: relative;
@@ -73,23 +73,21 @@
       display: block;
     }
 
-    /* Overlay click-to-comment: copre tutto il contenuto scrollabile */
+    /* Overlay click-to-comment */
     #comment-overlay {
       position: absolute;
       top: 0; left: 0;
       width: 100%;
-      height: 100%;
-      min-height: 100%;
+      /* height si imposta in JS = scrollHeight della box */
       z-index: 10;
       cursor: crosshair;
       display: none;
     }
     body.mode-comment #comment-overlay { display: block; }
-    body.mode-navigate .preview-box   { cursor: default; }
 
-    /* Popup commento inline che appare sul click */
+    /* Popup commento */
     .comment-popup {
-      position: absolute; z-index: 20;
+      position: fixed; z-index: 20;
       width: 240px;
       background: rgba(247,249,251,.95);
       backdrop-filter: blur(12px);
@@ -130,10 +128,10 @@
     <a href="/" class="topbar__logo" style="text-decoration:none">Precision</a>
     <nav class="topbar__nav">
       <a href="/">← Dashboard</a>
-      <span style="color:var(--tx);font-weight:500;margin-left:1rem;font-size:.85rem">Aperto Studio</span>
+      <span style="color:var(--tx);font-weight:500;margin-left:1rem;font-size:.85rem" id="project-name">Caricamento…</span>
     </nav>
     <div class="flex-c gap-1">
-      <a href="https://aperto.studio" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">↗ aperto.studio</a>
+      <a id="site-link" href="#" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">↗ Apri sito</a>
       <a href="/archive" class="btn btn--ghost btn--sm">Archivio</a>
       <div class="topbar__avatar">MP</div>
     </div>
@@ -141,37 +139,13 @@
 
   <div class="project-layout">
 
-    <!-- SIDEBAR navigazione sito -->
-    <aside class="sidebar">
-      <div class="sidebar__title">Struttura sito</div>
-      <div class="nav-item active" data-section="home">
-        <span class="nav-item__dot"></span> Home
-      </div>
-      <div class="nav-item" data-section="storie">
-        <span class="nav-item__dot"></span> Storie
-      </div>
-      <div class="nav-item" data-section="studio">
-        <span style="width:6px;height:6px;flex-shrink:0"></span> Studio
-      </div>
-      <div class="nav-item" data-section="direzione">
-        <span style="width:6px;height:6px;flex-shrink:0"></span> Direzione
-      </div>
-      <div class="nav-item" data-section="note">
-        <span style="width:6px;height:6px;flex-shrink:0"></span> Note
-      </div>
-      <div class="nav-item" data-section="contatti">
-        <span class="nav-item__dot resolved"></span> Contatti
-      </div>
-    </aside>
-
     <!-- AREA PREVIEW -->
     <section class="preview-wrap">
 
-      <!-- Toolbar: titolo + toggle + badge -->
+      <!-- Toolbar -->
       <div class="preview-toolbar">
-        <h2 id="page-title">Home</h2>
+        <h2 id="page-title" style="font-size:1rem;font-weight:600">—</h2>
 
-        <!-- MODE TOGGLE -->
         <div class="mode-toggle">
           <button class="mode-btn active" id="btn-navigate" onclick="setMode('navigate')">🖱 Naviga</button>
           <button class="mode-btn" id="btn-comment" onclick="setMode('comment')">💬 Commenta</button>
@@ -183,21 +157,15 @@
       <!-- Preview box -->
       <div class="preview-box card" id="preview-box" style="padding:0">
 
-        <!-- Overlay invisibile per catturare i click in modo commenta -->
         <div id="comment-overlay"></div>
 
-        <!-- Screenshot direttamente scrollabile nella preview-box -->
         <img
           id="screenshot-img"
-          src="https://api.microlink.io/?url=https://aperto.studio&screenshot=true&meta=false&embed=screenshot.url"
-          alt="aperto.studio preview"
-          onerror="this.outerHTML='<div style=\'padding:2rem;text-align:center;color:var(--tx-muted)\'>Preview non disponibile — <a href=\'https://aperto.studio\' target=\'_blank\'>apri il sito ↗</a></div>'"
+          src=""
+          alt="site preview"
+          onerror="this.outerHTML='<div style=\'padding:2rem;text-align:center;color:var(--tx-muted)\'>Preview non disponibile — <a id=\'site-fallback\' href=\'#\' target=\'_blank\'>apri il sito ↗</a></div>'"
         >
 
-        <!-- Pin commenti esistenti -->
-        <!-- pin generati dal DB -->
-
-        <!-- Popup commento -->
         <div class="comment-popup" id="comment-popup">
           <div style="font-size:.75rem;font-weight:600;color:var(--tx-muted);margin-bottom:.5rem">Nuovo commento</div>
           <textarea id="popup-input" placeholder="Descrivi il problema…"></textarea>
@@ -220,39 +188,45 @@
   </div>
 </div>
 
+<script src="app.js"></script>
 <script>
+const PROJECT_ID = parseInt(new URLSearchParams(location.search).get('id') || '1', 10);
+
 // ── MODE TOGGLE ──
+const overlay = document.getElementById('comment-overlay');
+const popup   = document.getElementById('comment-popup');
+const box     = document.getElementById('preview-box');
+
 function setMode(mode) {
   document.body.className = 'mode-' + mode;
   document.getElementById('btn-navigate').classList.toggle('active', mode === 'navigate');
   document.getElementById('btn-comment').classList.toggle('active', mode === 'comment');
-  // Chiudi popup se si esce dal modo commenta
+  if (mode === 'comment') {
+    // L'overlay deve coprire tutta l'altezza dello scroll content
+    overlay.style.height = box.scrollHeight + 'px';
+  }
   if (mode === 'navigate') cancelComment();
 }
 
 // ── CLICK-TO-COMMENT ──
 let pendingPin = null;
 let pinCount = 0;
-const overlay = document.getElementById('comment-overlay');
-const popup   = document.getElementById('comment-popup');
-const box     = document.getElementById('preview-box');
 
 overlay.addEventListener('click', e => {
   const rect = box.getBoundingClientRect();
-  // x relativo alla larghezza, y tiene conto dello scroll
-  const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-  const yPx = e.clientY - rect.top + box.scrollTop;
+  const x    = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+  const yPx  = e.clientY - rect.top + box.scrollTop;
   const yPct = (yPx / box.scrollHeight * 100).toFixed(1);
 
-  // Popup fisso nella viewport (sticky al viewport, non al contenuto)
-  const popupX = Math.min(parseFloat(x) + 2, 60);
-  const popupY = Math.min(e.clientY - rect.top + 8, rect.height - 180);
-  popup.style.left = popupX + '%';
-  popup.style.top  = popupY + 'px';
+  // Popup fisso nella viewport
+  const popupLeft = Math.min(e.clientX + 8, window.innerWidth - 256);
+  const popupTop  = Math.min(e.clientY + 8, window.innerHeight - 180);
+  popup.style.left = popupLeft + 'px';
+  popup.style.top  = popupTop  + 'px';
   popup.classList.add('open');
   document.getElementById('popup-input').focus();
 
-  // Pin ancorato al contenuto (posizione assoluta rispetto all'immagine)
+  // Pin ancorato al contenuto
   if (pendingPin) pendingPin.remove();
   pendingPin = document.createElement('div');
   pendingPin.className = 'pin';
@@ -271,16 +245,14 @@ async function saveComment() {
   const txt = document.getElementById('popup-input').value.trim();
   if (!txt) return;
 
-  // Salva nel DB
-  const currentPage = document.getElementById('page-title').textContent.trim();
   const xPct = pendingPin ? parseFloat(pendingPin.style.left) : null;
   const yPct = pendingPin ? parseFloat(pendingPin.style.top)  : null;
   const saved = await API.post('comments', {
-    project_id: PROJECT_ID, page: currentPage,
+    project_id: PROJECT_ID,
+    page: document.getElementById('page-title').textContent.trim(),
     author: 'Massimo P.', body: txt, x_pct: xPct, y_pct: yPct
   });
 
-  // Rendi pin permanente
   if (pendingPin) {
     const domId = 'c' + saved.id;
     pendingPin.style.opacity = '1';
@@ -291,7 +263,6 @@ async function saveComment() {
     pinCount++;
   }
 
-  // Aggiungi thread nel panel
   renderThread(saved);
   updateCount();
   cancelComment();
@@ -307,12 +278,7 @@ function highlightComment(id) {
   setTimeout(() => el.style.outline = '', 1500);
 }
 
-// Pin esistenti → highlight
-document.querySelectorAll('.pin[data-comment]').forEach(pin => {
-  pin.addEventListener('click', () => highlightComment(pin.dataset.comment));
-});
-
-// ── RESOLVE → salva nel DB ──
+// ── RESOLVE ──
 document.getElementById('comment-list').addEventListener('click', async e => {
   const btn = e.target.closest('[data-resolve]');
   if (!btn) return;
@@ -321,8 +287,8 @@ document.getElementById('comment-list').addEventListener('click', async e => {
   const thread = btn.closest('.thread');
   const badge  = thread.querySelector('.badge');
   if (badge) { badge.className = 'badge badge--resolved'; badge.textContent = 'Risolto'; }
-  const pinId = btn.dataset.pin;
-  if (pinId) { const pin = document.getElementById(pinId); if (pin) pin.classList.add('resolved'); }
+  const pinEl = document.getElementById('pin-c' + dbId);
+  if (pinEl) pinEl.classList.add('resolved');
   btn.remove();
   updateCount();
 });
@@ -335,7 +301,9 @@ function updateCount() {
 // ── RENDER THREAD ──
 function renderThread(c, prepend = true) {
   const domId = 'c' + c.id;
-  const age = c.created_at ? new Date(c.created_at).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'adesso';
+  const age = c.created_at
+    ? new Date(c.created_at).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+    : 'adesso';
   const isActive = c.status === 'active';
   const t = document.createElement('div');
   t.className = 'card thread';
@@ -352,7 +320,6 @@ function renderThread(c, prepend = true) {
   const list = document.getElementById('comment-list');
   if (prepend) list.prepend(t); else list.append(t);
 
-  // Pin se ha coordinate
   if (c.x_pct && c.y_pct) {
     pinCount++;
     const existing = document.getElementById('pin-' + domId);
@@ -369,33 +336,35 @@ function renderThread(c, prepend = true) {
   }
 }
 
-// ── CARICA COMMENTI DAL DB ──
-const PROJECT_ID = new URLSearchParams(location.search).get('id') || 1;
+// ── INIT: carica progetto + commenti ──
 (async () => {
-  const comments = await API.get('comments?project_id=' + PROJECT_ID);
-  document.getElementById('comment-list').innerHTML = '';
-  if (comments.length === 0) {
-    document.getElementById('comment-list').innerHTML = '<div style="opacity:.4;text-align:center;padding:1rem;font-size:.8rem;color:var(--tx-muted)">Nessun commento</div>';
+  const [project, comments] = await Promise.all([
+    API.get('projects').then(ps => ps.find(p => p.id === PROJECT_ID) || ps[0]),
+    API.get('comments?project_id=' + PROJECT_ID)
+  ]);
+
+  if (project) {
+    document.title = 'Precision — ' + project.name;
+    document.getElementById('project-name').textContent = project.name;
+    document.getElementById('page-title').textContent = project.name;
+    const siteLink = document.getElementById('site-link');
+    siteLink.href = project.url;
+    siteLink.textContent = '↗ ' + project.url.replace('https://','');
+    // Screenshot full-page via microlink
+    const img = document.getElementById('screenshot-img');
+    img.alt = project.name + ' preview';
+    img.src = `https://api.microlink.io/?url=${encodeURIComponent(project.url)}&screenshot=true&screenshot.fullPage=true&meta=false&embed=screenshot.url`;
+  }
+
+  const list = document.getElementById('comment-list');
+  list.innerHTML = '';
+  if (!comments.length) {
+    list.innerHTML = '<div style="opacity:.4;text-align:center;padding:1rem;font-size:.8rem;color:var(--tx-muted)">Nessun commento</div>';
   } else {
     comments.forEach(c => renderThread(c, false));
   }
   updateCount();
 })();
-
-// ── SIDEBAR navigazione sezioni ──
-document.querySelectorAll('.nav-item[data-section]').forEach(item => {
-  item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    item.classList.add('active');
-    document.getElementById('page-title').textContent = item.textContent.trim();
-    // Scroll nella screenshot se immagine caricata, altrimenti apri link
-    const img = document.getElementById('screenshot-img');
-    if (!img || !img.complete || img.naturalHeight === 0) {
-      window.open('https://aperto.studio/#' + item.dataset.section, '_blank');
-    }
-  });
-});
 </script>
-<script src="app.js"></script>
 </body>
 </html>

@@ -11,9 +11,10 @@ document.querySelectorAll('.topbar__nav a').forEach(a => {
 
 // ── API helpers ──
 const API = {
-  get:   (path)       => fetch('/.netlify/functions/' + path).then(r => r.json()),
-  post:  (path, data) => fetch('/.netlify/functions/' + path, { method:'POST',  body: JSON.stringify(data) }).then(r => r.json()),
-  patch: (path, data) => fetch('/.netlify/functions/' + path, { method:'PATCH', body: JSON.stringify(data) }).then(r => r.json()),
+  get:    (path)       => fetch('/.netlify/functions/' + path).then(r => r.json()),
+  post:   (path, data) => fetch('/.netlify/functions/' + path, { method:'POST',   body: JSON.stringify(data) }).then(r => r.json()),
+  patch:  (path, data) => fetch('/.netlify/functions/' + path, { method:'PATCH',  body: JSON.stringify(data) }).then(r => r.json()),
+  delete: (path)       => fetch('/.netlify/functions/' + path, { method:'DELETE' }).then(r => r.json()),
 };
 
 // Esposto globalmente per le pagine
