@@ -54,40 +54,38 @@
       box-shadow: var(--shadow);
     }
 
-    /* Box preview */
+    /* Box preview: è lui stesso il container scrollabile */
     .preview-box {
-      flex: 1; position: relative;
+      flex: 1;
+      position: relative;
       border-radius: var(--r-xl);
-      overflow: hidden;
-      background: var(--s-highest);
-      min-height: 0; /* fondamentale per flex */
-    }
-
-    /* Iframe a schermo pieno dentro la box */
-    .preview-box iframe {
-      width: 100%; height: 100%;
-      border: none; display: block;
-    }
-
-    /* Screenshot scrollabile (modo naviga con sito bloccato) */
-    .screenshot-scroll {
-      width: 100%; height: 100%;
-      overflow-y: auto;
+      overflow-y: scroll;
       overflow-x: hidden;
-    }
-    .screenshot-scroll img {
-      width: 100%; display: block;
+      background: var(--s-highest);
+      min-height: 0;
+      -webkit-overflow-scrolling: touch;
     }
 
-    /* Overlay click-to-comment (attivo solo in modo "commenta") */
+    /* Screenshot direttamente dentro la box */
+    #screenshot-img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Overlay click-to-comment: copre tutto il contenuto scrollabile */
     #comment-overlay {
-      position: absolute; inset: 0; z-index: 10;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      z-index: 10;
       cursor: crosshair;
-      display: none; /* nascosto in modo naviga */
+      display: none;
     }
     body.mode-comment #comment-overlay { display: block; }
-    /* In modo naviga, il cursore è normale */
-    body.mode-navigate .preview-box { cursor: default; }
+    body.mode-navigate .preview-box   { cursor: default; }
 
     /* Popup commento inline che appare sul click */
     .comment-popup {
@@ -183,20 +181,18 @@
       </div>
 
       <!-- Preview box -->
-      <div class="preview-box card" id="preview-box">
+      <div class="preview-box card" id="preview-box" style="padding:0">
 
         <!-- Overlay invisibile per catturare i click in modo commenta -->
         <div id="comment-overlay"></div>
 
-        <!-- Screenshot scrollabile (fallback quando iframe bloccato) -->
-        <div class="screenshot-scroll" id="screenshot-wrap">
-          <img
-            id="screenshot-img"
-            src="https://api.microlink.io/?url=https://aperto.studio&screenshot=true&meta=false&embed=screenshot.url"
-            alt="aperto.studio preview"
-            onerror="this.src='';this.closest('.screenshot-scroll').innerHTML='<div style=\'padding:2rem;text-align:center;color:var(--tx-muted)\'>Preview non disponibile — <a href=\'https://aperto.studio\' target=\'_blank\'>apri il sito ↗</a></div>'"
-          >
-        </div>
+        <!-- Screenshot direttamente scrollabile nella preview-box -->
+        <img
+          id="screenshot-img"
+          src="https://api.microlink.io/?url=https://aperto.studio&screenshot=true&meta=false&embed=screenshot.url"
+          alt="aperto.studio preview"
+          onerror="this.outerHTML='<div style=\'padding:2rem;text-align:center;color:var(--tx-muted)\'>Preview non disponibile — <a href=\'https://aperto.studio\' target=\'_blank\'>apri il sito ↗</a></div>'"
+        >
 
         <!-- Pin commenti esistenti -->
         <div class="pin" id="pin-c1" style="top:14%;left:62%" data-comment="c1">1</div>
@@ -284,20 +280,24 @@ const box     = document.getElementById('preview-box');
 
 overlay.addEventListener('click', e => {
   const rect = box.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
-  const y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
+  // x relativo alla larghezza, y tiene conto dello scroll
+  const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+  const yPx = e.clientY - rect.top + box.scrollTop;
+  const yPct = (yPx / box.scrollHeight * 100).toFixed(1);
 
-  // Mostra popup vicino al click
-  popup.style.left = Math.min(parseFloat(x) + 2, 65) + '%';
-  popup.style.top  = Math.min(parseFloat(y) + 2, 75) + '%';
+  // Popup fisso nella viewport (sticky al viewport, non al contenuto)
+  const popupX = Math.min(parseFloat(x) + 2, 60);
+  const popupY = Math.min(e.clientY - rect.top + 8, rect.height - 180);
+  popup.style.left = popupX + '%';
+  popup.style.top  = popupY + 'px';
   popup.classList.add('open');
   document.getElementById('popup-input').focus();
 
-  // Crea pin temporaneo
+  // Pin ancorato al contenuto (posizione assoluta rispetto all'immagine)
   if (pendingPin) pendingPin.remove();
   pendingPin = document.createElement('div');
   pendingPin.className = 'pin';
-  pendingPin.style.cssText = `top:${y}%;left:${x}%;opacity:.5`;
+  pendingPin.style.cssText = `top:${yPct}%;left:${x}%;opacity:.5`;
   pendingPin.textContent = pinCount + 1;
   box.appendChild(pendingPin);
 });
