@@ -48,7 +48,7 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="archive-body">
           <tr data-status="Attivo" data-project="Aperto">
             <td><strong>Aperto Studio</strong></td>
             <td>Home</td>
@@ -100,12 +100,37 @@
   </main>
 </div>
 <script>
+// Filtro
 function filterTable(val, key) {
-  document.querySelectorAll('#archive-table tbody tr').forEach(row => {
-    const match = !val || row.dataset[key]?.includes(val);
+  document.querySelectorAll('#archive-body tr').forEach(row => {
+    const match = !val || (row.dataset[key]||'').includes(val);
     row.style.display = match ? '' : 'none';
   });
 }
+
+// Carica dal DB
+(async () => {
+  const comments = await API.get('comments');
+  const tbody = document.getElementById('archive-body');
+  if (!comments.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;opacity:.4;padding:1.5rem">Nessun commento</td></tr>';
+    return;
+  }
+  tbody.innerHTML = comments.map(c => {
+    const date = c.created_at ? new Date(c.created_at).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const isActive = c.status === 'active';
+    const initials = c.author.split(' ').map(w=>w[0]).join('');
+    return `<tr data-status="${isActive?'Attivo':'Risolto'}" data-project="${c.project_name||'Aperto'}">
+      <td><strong>${c.project_name||'Aperto Studio'}</strong></td>
+      <td>${c.page}</td>
+      <td><div class="flex-c gap-1"><div class="avatar">${initials}</div> ${c.author}</div></td>
+      <td>${c.body}</td>
+      <td class="meta">${date}</td>
+      <td><span class="badge badge--${isActive?'active':'resolved'}">${isActive?'Attivo':'Risolto'}</span></td>
+      <td><a href="/project?id=${c.project_id}" class="btn btn--ghost btn--sm">Apri</a></td>
+    </tr>`;
+  }).join('');
+})();
 </script>
 <script src="app.js"></script>
 </body>

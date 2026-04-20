@@ -216,46 +216,7 @@
     <aside class="comment-panel">
       <div class="sidebar__title">Commenti</div>
       <div class="comment-list" id="comment-list" style="display:flex;flex-direction:column;gap:.75rem">
-
-        <div class="card thread" id="c1">
-          <div class="thread__header">
-            <div class="avatar">MP</div>
-            <span class="thread__author">Massimo P.</span>
-            <span class="meta ml-auto">30min fa</span>
-            <span class="badge badge--active">Attivo</span>
-          </div>
-          <div class="thread__body">Il tagline "Entra pure, è Aperto" si taglia su mobile a 375px. Verificare il wrapping.</div>
-          <div class="thread__actions">
-            <button class="btn btn--ghost btn--sm" data-resolve data-pin="pin-c1">✓ Risolvi</button>
-          </div>
-        </div>
-
-        <div class="card thread" id="c2">
-          <div class="thread__header">
-            <div class="avatar">MP</div>
-            <span class="thread__author">Massimo P.</span>
-            <span class="meta ml-auto">1h fa</span>
-            <span class="badge badge--active">Attivo</span>
-          </div>
-          <div class="thread__body">Sezione Storie: card progetti con hover state più marcato (Tip Tap, Vibly…).</div>
-          <div class="thread__actions">
-            <button class="btn btn--ghost btn--sm" data-resolve data-pin="pin-c2">✓ Risolvi</button>
-          </div>
-        </div>
-
-        <div class="card thread" id="c3">
-          <div class="thread__header">
-            <div class="avatar">MP</div>
-            <span class="thread__author">Massimo P.</span>
-            <span class="meta ml-auto">2h fa</span>
-            <span class="badge badge--active">Attivo</span>
-          </div>
-          <div class="thread__body">Contatti: link Instagram e LinkedIn visibili senza scroll da desktop.</div>
-          <div class="thread__actions">
-            <button class="btn btn--ghost btn--sm" data-resolve data-pin="pin-c3">✓ Risolvi</button>
-          </div>
-        </div>
-
+        <div style="opacity:.4;text-align:center;padding:1rem;font-size:.8rem;color:var(--tx-muted)">Caricamento…</div>
       </div>
     </aside>
   </div>
@@ -308,41 +269,35 @@ function cancelComment() {
   document.getElementById('popup-input').value = '';
 }
 
-function saveComment() {
+async function saveComment() {
   const txt = document.getElementById('popup-input').value.trim();
   if (!txt) return;
-  pinCount++;
-  const id = 'c' + pinCount;
 
-  // Rendi il pin permanente
-  pendingPin.style.opacity = '1';
-  pendingPin.id = 'pin-' + id;
-  pendingPin.textContent = pinCount;
-  pendingPin.dataset.comment = id;
-  pendingPin.addEventListener('click', () => highlightComment(id));
-  pendingPin = null;
+  // Salva nel DB
+  const currentPage = document.getElementById('page-title').textContent.trim();
+  const xPct = pendingPin ? parseFloat(pendingPin.style.left) : null;
+  const yPct = pendingPin ? parseFloat(pendingPin.style.top)  : null;
+  const saved = await API.post('comments', {
+    project_id: PROJECT_ID, page: currentPage,
+    author: 'Massimo P.', body: txt, x_pct: xPct, y_pct: yPct
+  });
+
+  // Rendi pin permanente
+  if (pendingPin) {
+    const domId = 'c' + saved.id;
+    pendingPin.style.opacity = '1';
+    pendingPin.id = 'pin-' + domId;
+    pendingPin.dataset.comment = domId;
+    pendingPin.addEventListener('click', () => highlightComment(domId));
+    pendingPin = null;
+    pinCount++;
+  }
 
   // Aggiungi thread nel panel
-  const thread = document.createElement('div');
-  thread.className = 'card thread';
-  thread.id = id;
-  thread.innerHTML = `
-    <div class="thread__header">
-      <div class="avatar">MP</div>
-      <span class="thread__author">Massimo P.</span>
-      <span class="meta ml-auto">adesso</span>
-      <span class="badge badge--active">Attivo</span>
-    </div>
-    <div class="thread__body">${txt}</div>
-    <div class="thread__actions">
-      <button class="btn btn--ghost btn--sm" data-resolve data-pin="pin-${id}">✓ Risolvi</button>
-    </div>`;
-  document.getElementById('comment-list').prepend(thread);
-
-  // Aggiorna contatore
+  renderThread(saved);
   updateCount();
   cancelComment();
-  setMode('navigate'); // torna in naviga dopo aver inviato
+  setMode('navigate');
 }
 
 // ── HIGHLIGHT commento da pin ──
@@ -359,18 +314,17 @@ document.querySelectorAll('.pin[data-comment]').forEach(pin => {
   pin.addEventListener('click', () => highlightComment(pin.dataset.comment));
 });
 
-// ── RESOLVE (aggiorna pin + contatore) ──
-document.getElementById('comment-list').addEventListener('click', e => {
+// ── RESOLVE → salva nel DB ──
+document.getElementById('comment-list').addEventListener('click', async e => {
   const btn = e.target.closest('[data-resolve]');
   if (!btn) return;
+  const dbId = btn.dataset.dbid;
+  if (dbId) await API.patch('comments?id=' + dbId, { status: 'resolved' });
   const thread = btn.closest('.thread');
   const badge  = thread.querySelector('.badge');
   if (badge) { badge.className = 'badge badge--resolved'; badge.textContent = 'Risolto'; }
   const pinId = btn.dataset.pin;
-  if (pinId) {
-    const pin = document.getElementById(pinId);
-    if (pin) pin.classList.add('resolved');
-  }
+  if (pinId) { const pin = document.getElementById(pinId); if (pin) pin.classList.add('resolved'); }
   btn.remove();
   updateCount();
 });
@@ -379,6 +333,56 @@ function updateCount() {
   const open = document.querySelectorAll('#comment-list .badge--active').length;
   document.getElementById('open-count').textContent = open + ' aper' + (open === 1 ? 'to' : 'ti');
 }
+
+// ── RENDER THREAD ──
+function renderThread(c, prepend = true) {
+  const domId = 'c' + c.id;
+  const age = c.created_at ? new Date(c.created_at).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'adesso';
+  const isActive = c.status === 'active';
+  const t = document.createElement('div');
+  t.className = 'card thread';
+  t.id = domId;
+  t.innerHTML = `
+    <div class="thread__header">
+      <div class="avatar">${c.author.split(' ').map(w=>w[0]).join('')}</div>
+      <span class="thread__author">${c.author}</span>
+      <span class="meta ml-auto">${age}</span>
+      <span class="badge badge--${isActive?'active':'resolved'}">${isActive?'Attivo':'Risolto'}</span>
+    </div>
+    <div class="thread__body">${c.body}</div>
+    ${isActive ? `<div class="thread__actions"><button class="btn btn--ghost btn--sm" data-resolve data-pin="pin-${domId}" data-dbid="${c.id}">✓ Risolvi</button></div>` : ''}`;
+  const list = document.getElementById('comment-list');
+  if (prepend) list.prepend(t); else list.append(t);
+
+  // Pin se ha coordinate
+  if (c.x_pct && c.y_pct) {
+    pinCount++;
+    const existing = document.getElementById('pin-' + domId);
+    if (!existing) {
+      const pin = document.createElement('div');
+      pin.className = 'pin' + (isActive ? '' : ' resolved');
+      pin.id = 'pin-' + domId;
+      pin.style.cssText = `top:${c.y_pct}%;left:${c.x_pct}%`;
+      pin.dataset.comment = domId;
+      pin.textContent = pinCount;
+      pin.addEventListener('click', () => highlightComment(domId));
+      box.appendChild(pin);
+    }
+  }
+}
+
+// ── CARICA COMMENTI DAL DB ──
+const PROJECT_ID = new URLSearchParams(location.search).get('id') || 1;
+(async () => {
+  const comments = await API.get('comments?project_id=' + PROJECT_ID);
+  document.getElementById('comment-list').innerHTML = '';
+  if (comments.length === 0) {
+    document.getElementById('comment-list').innerHTML = '<div style="opacity:.4;text-align:center;padding:1rem;font-size:.8rem;color:var(--tx-muted)">Nessun commento</div>';
+  } else {
+    comments.forEach(c => renderThread(c, false));
+  }
+  updateCount();
+})();
 
 // ── SIDEBAR navigazione sezioni ──
 document.querySelectorAll('.nav-item[data-section]').forEach(item => {

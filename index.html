@@ -7,7 +7,6 @@
 </head>
 <body>
 <div class="app">
-
   <header class="topbar">
     <a href="/" class="topbar__logo" style="text-decoration:none">Precision</a>
     <nav class="topbar__nav">
@@ -18,39 +17,66 @@
   </header>
 
   <main class="content">
-
     <div class="flex-c gap-2 mb-3">
       <h1>Progetti</h1>
       <a href="/project" class="btn btn--primary ml-auto">+ Nuovo progetto</a>
     </div>
 
+    <!-- Stats dinamiche -->
     <div class="card mb-3">
       <div class="grid grid--3">
-        <div class="stat"><div class="stat__num">1</div><div class="stat__label">Progetto attivo</div></div>
-        <div class="stat"><div class="stat__num">3</div><div class="stat__label">Commenti aperti</div></div>
-        <div class="stat"><div class="stat__num">2</div><div class="stat__label">Risolti</div></div>
+        <div class="stat"><div class="stat__num" id="stat-projects">—</div><div class="stat__label">Progetti</div></div>
+        <div class="stat"><div class="stat__num" id="stat-open">—</div><div class="stat__label">Commenti aperti</div></div>
+        <div class="stat"><div class="stat__num" id="stat-resolved">—</div><div class="stat__label">Risolti</div></div>
       </div>
     </div>
 
-    <div class="grid grid--3">
-
-      <a href="/project" class="card project-card">
-        <div class="project-card__thumb" style="padding:0;overflow:hidden;background:#f5f5f2">
-          <img src="https://api.microlink.io/?url=https://aperto.studio&screenshot=true&meta=false&embed=screenshot.url" alt="aperto.studio" style="width:100%;height:100%;object-fit:cover;object-position:top" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-          <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;gap:.4rem;font-family:var(--f-head);font-size:1rem;font-weight:700;color:#1a1a18;letter-spacing:-.02em">Entra pure,<br>è Aperto.<span style="font-size:.7rem;color:#888;font-weight:400;margin-top:.2rem">aperto.studio</span></div>
-          <span class="project-card__badge badge badge--active">3 aperti</span>
-        </div>
-        <h3 class="mb-1">Aperto Studio</h3>
-        <div class="label">aperto.studio · aggiornato 30min fa</div>
-        <div class="flex-c gap-1 mt-2">
-          <div class="avatar">MP</div>
-          <span class="badge badge--count ml-auto">1 reviewer</span>
-        </div>
-      </a>
-
+    <!-- Grid progetti generata dal DB -->
+    <div class="grid grid--3" id="projects-grid">
+      <div class="card" style="opacity:.4;padding:2rem;text-align:center;color:var(--tx-muted)">Caricamento…</div>
     </div>
   </main>
 </div>
+
 <script src="app.js"></script>
+<script>
+(async () => {
+  const [projects, allComments] = await Promise.all([
+    API.get('projects'),
+    API.get('comments')
+  ]);
+
+  // Stats
+  const open     = allComments.filter(c => c.status === 'active').length;
+  const resolved = allComments.filter(c => c.status === 'resolved').length;
+  document.getElementById('stat-projects').textContent  = projects.length;
+  document.getElementById('stat-open').textContent      = open;
+  document.getElementById('stat-resolved').textContent  = resolved;
+
+  // Grid
+  const grid = document.getElementById('projects-grid');
+  grid.innerHTML = projects.map(p => {
+    const pComments = allComments.filter(c => c.project_id === p.id);
+    const pOpen = pComments.filter(c => c.status === 'active').length;
+    const badge = pOpen > 0
+      ? `<span class="project-card__badge badge badge--active">${pOpen} aper${pOpen===1?'to':'ti'}</span>`
+      : `<span class="project-card__badge badge badge--resolved">✓ OK</span>`;
+    return `
+      <a href="/project?id=${p.id}" class="card project-card">
+        <div class="project-card__thumb" style="background:linear-gradient(135deg,#f5f5f2,#eae9e4);flex-direction:column;gap:.4rem">
+          <span style="font-family:var(--f-head);font-size:1rem;font-weight:700;color:#1a1a18;letter-spacing:-.02em;padding:0 1rem;text-align:center">${p.name}</span>
+          <span style="font-size:.7rem;color:#888">${p.url.replace('https://','')}</span>
+          ${badge}
+        </div>
+        <h3 class="mb-1">${p.name}</h3>
+        <div class="label">${p.url.replace('https://','')}</div>
+        <div class="flex-c gap-1 mt-2">
+          <div class="avatar">MP</div>
+          <span class="badge badge--count ml-auto">${pComments.length} commenti</span>
+        </div>
+      </a>`;
+  }).join('');
+})();
+</script>
 </body>
 </html>
