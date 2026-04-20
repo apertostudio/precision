@@ -2,10 +2,9 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width">
-  <title>Precision — Aperto Studio</title>
+  <title>Precision</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Layout 2 colonne: preview | commenti */
     .project-layout {
       display: grid;
       grid-template-columns: 1fr 300px;
@@ -13,7 +12,6 @@
       overflow: hidden;
     }
 
-    /* Pannello commenti */
     .comment-panel {
       overflow-y: auto;
       height: 100%;
@@ -22,7 +20,6 @@
       display: flex; flex-direction: column; gap: .75rem;
     }
 
-    /* Area centrale */
     .preview-wrap {
       display: flex; flex-direction: column;
       height: 100%; overflow: hidden;
@@ -30,13 +27,11 @@
       gap: .75rem;
     }
 
-    /* Toolbar: titolo + toggle + badge */
     .preview-toolbar {
       display: flex; align-items: center; gap: .75rem;
       flex-shrink: 0;
     }
 
-    /* Mode toggle */
     .mode-toggle {
       display: flex; background: var(--s-high);
       border-radius: var(--r-lg); padding: 3px; gap: 2px;
@@ -48,13 +43,9 @@
       border: none; background: transparent; color: var(--tx-sub);
       transition: all .15s; white-space: nowrap;
     }
-    .mode-btn.active {
-      background: var(--s-white);
-      color: var(--tx);
-      box-shadow: var(--shadow);
-    }
+    .mode-btn.active { background: var(--s-white); color: var(--tx); box-shadow: var(--shadow); }
 
-    /* Preview box — è lui il container scrollabile */
+    /* Preview box — scroll container esterno */
     .preview-box {
       flex: 1;
       position: relative;
@@ -66,19 +57,35 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    /* Screenshot direttamente dentro la box */
-    #screenshot-img {
+    /* Iframe: niente scroll interno, si espande all'altezza reale del sito */
+    #preview-iframe {
       width: 100%;
-      height: auto;
+      border: none;
       display: block;
+      min-height: 200px;
+      /* height impostata dinamicamente */
     }
 
-    /* Overlay click-to-comment */
+    /* Loading state */
+    #preview-loading {
+      display: flex; align-items: center; justify-content: center;
+      gap: .5rem; height: 240px;
+      font-size: .85rem; color: var(--tx-muted);
+    }
+    .spinner {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--outline);
+      border-top-color: var(--primary);
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Overlay commenti: copre tutto il contenuto scrollabile */
     #comment-overlay {
       position: absolute;
       top: 0; left: 0;
       width: 100%;
-      /* height si imposta in JS = scrollHeight della box */
+      /* height impostata dinamicamente = scrollHeight */
       z-index: 10;
       cursor: crosshair;
       display: none;
@@ -87,12 +94,12 @@
 
     /* Popup commento */
     .comment-popup {
-      position: fixed; z-index: 20;
+      position: fixed; z-index: 100;
       width: 240px;
-      background: rgba(247,249,251,.95);
+      background: rgba(247,249,251,.97);
       backdrop-filter: blur(12px);
       border-radius: var(--r-xl);
-      box-shadow: 0 8px 24px rgba(25,28,30,.12);
+      box-shadow: 0 8px 24px rgba(25,28,30,.14);
       padding: 1rem;
       display: none;
     }
@@ -128,7 +135,7 @@
     <a href="/" class="topbar__logo" style="text-decoration:none">Precision</a>
     <nav class="topbar__nav">
       <a href="/">← Dashboard</a>
-      <span style="color:var(--tx);font-weight:500;margin-left:1rem;font-size:.85rem" id="project-name">Caricamento…</span>
+      <span style="color:var(--tx);font-weight:500;margin-left:1rem;font-size:.85rem" id="project-name">…</span>
     </nav>
     <div class="flex-c gap-1">
       <a id="site-link" href="#" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">↗ Apri sito</a>
@@ -139,28 +146,35 @@
 
   <div class="project-layout">
 
-    <!-- AREA PREVIEW -->
     <section class="preview-wrap">
-
-      <!-- Toolbar -->
       <div class="preview-toolbar">
         <h2 id="page-title" style="font-size:1rem;font-weight:600">—</h2>
-
         <div class="mode-toggle">
           <button class="mode-btn active" id="btn-navigate" onclick="setMode('navigate')">🖱 Naviga</button>
           <button class="mode-btn" id="btn-comment" onclick="setMode('comment')">💬 Commenta</button>
         </div>
-
         <span class="badge badge--active ml-auto" id="open-count">…</span>
       </div>
 
-      <!-- Preview box -->
       <div class="preview-box card" id="preview-box" style="padding:0">
 
+        <!-- Loading indicator (visibile durante il caricamento del sito) -->
+        <div id="preview-loading">
+          <div class="spinner"></div>
+          Caricamento sito…
+        </div>
+
+        <!-- Iframe del sito reale via proxy -->
+        <iframe id="preview-iframe"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+          style="display:none"
+          title="Site preview">
+        </iframe>
+
+        <!-- Overlay per catturare click in modalità commenta -->
         <div id="comment-overlay"></div>
 
-        <img id="screenshot-img" alt="site preview" style="width:100%;height:auto;display:block">
-
+        <!-- Popup commento -->
         <div class="comment-popup" id="comment-popup">
           <div style="font-size:.75rem;font-weight:600;color:var(--tx-muted);margin-bottom:.5rem">Nuovo commento</div>
           <textarea id="popup-input" placeholder="Descrivi il problema…"></textarea>
@@ -173,7 +187,6 @@
       </div>
     </section>
 
-    <!-- PANEL COMMENTI -->
     <aside class="comment-panel">
       <div class="sidebar__title">Commenti</div>
       <div class="comment-list" id="comment-list" style="display:flex;flex-direction:column;gap:.75rem">
@@ -187,25 +200,30 @@
 <script>
 const PROJECT_ID = parseInt(new URLSearchParams(location.search).get('id') || '1', 10);
 
-// ── MODE TOGGLE ──
 const overlay = document.getElementById('comment-overlay');
 const popup   = document.getElementById('comment-popup');
 const box     = document.getElementById('preview-box');
+const iframe  = document.getElementById('preview-iframe');
 
+// ── MODE TOGGLE ──
 function setMode(mode) {
   document.body.className = 'mode-' + mode;
   document.getElementById('btn-navigate').classList.toggle('active', mode === 'navigate');
   document.getElementById('btn-comment').classList.toggle('active', mode === 'comment');
   if (mode === 'comment') {
-    // L'overlay deve coprire tutta l'altezza dello scroll content
+    // Copre tutta l'altezza scrollabile
     overlay.style.height = box.scrollHeight + 'px';
+    // Disabilita eventi dentro l'iframe in modalità commenta
+    iframe.style.pointerEvents = 'none';
+  } else {
+    iframe.style.pointerEvents = '';
+    cancelComment();
   }
-  if (mode === 'navigate') cancelComment();
 }
 
 // ── CLICK-TO-COMMENT ──
 let pendingPin = null;
-let pinCount = 0;
+let pinCount   = 0;
 
 overlay.addEventListener('click', e => {
   const rect = box.getBoundingClientRect();
@@ -214,14 +232,13 @@ overlay.addEventListener('click', e => {
   const yPct = (yPx / box.scrollHeight * 100).toFixed(1);
 
   // Popup fisso nella viewport
-  const popupLeft = Math.min(e.clientX + 8, window.innerWidth - 256);
-  const popupTop  = Math.min(e.clientY + 8, window.innerHeight - 180);
-  popup.style.left = popupLeft + 'px';
-  popup.style.top  = popupTop  + 'px';
+  const px = Math.min(e.clientX + 10, window.innerWidth  - 260);
+  const py = Math.min(e.clientY + 10, window.innerHeight - 190);
+  popup.style.left = px + 'px';
+  popup.style.top  = py + 'px';
   popup.classList.add('open');
   document.getElementById('popup-input').focus();
 
-  // Pin ancorato al contenuto
   if (pendingPin) pendingPin.remove();
   pendingPin = document.createElement('div');
   pendingPin.className = 'pin';
@@ -239,7 +256,6 @@ function cancelComment() {
 async function saveComment() {
   const txt = document.getElementById('popup-input').value.trim();
   if (!txt) return;
-
   const xPct = pendingPin ? parseFloat(pendingPin.style.left) : null;
   const yPct = pendingPin ? parseFloat(pendingPin.style.top)  : null;
   const saved = await API.post('comments', {
@@ -247,24 +263,21 @@ async function saveComment() {
     page: document.getElementById('page-title').textContent.trim(),
     author: 'Massimo P.', body: txt, x_pct: xPct, y_pct: yPct
   });
-
   if (pendingPin) {
     const domId = 'c' + saved.id;
     pendingPin.style.opacity = '1';
     pendingPin.id = 'pin-' + domId;
     pendingPin.dataset.comment = domId;
     pendingPin.addEventListener('click', () => highlightComment(domId));
-    pendingPin = null;
-    pinCount++;
+    pendingPin = null; pinCount++;
   }
-
   renderThread(saved);
   updateCount();
   cancelComment();
   setMode('navigate');
 }
 
-// ── HIGHLIGHT commento da pin ──
+// ── HIGHLIGHT ──
 function highlightComment(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -301,8 +314,7 @@ function renderThread(c, prepend = true) {
     : 'adesso';
   const isActive = c.status === 'active';
   const t = document.createElement('div');
-  t.className = 'card thread';
-  t.id = domId;
+  t.className = 'card thread'; t.id = domId;
   t.innerHTML = `
     <div class="thread__header">
       <div class="avatar">${c.author.split(' ').map(w=>w[0]).join('')}</div>
@@ -311,14 +323,13 @@ function renderThread(c, prepend = true) {
       <span class="badge badge--${isActive?'active':'resolved'}">${isActive?'Attivo':'Risolto'}</span>
     </div>
     <div class="thread__body">${c.body}</div>
-    ${isActive ? `<div class="thread__actions"><button class="btn btn--ghost btn--sm" data-resolve data-pin="pin-${domId}" data-dbid="${c.id}">✓ Risolvi</button></div>` : ''}`;
+    ${isActive ? `<div class="thread__actions"><button class="btn btn--ghost btn--sm" data-resolve data-dbid="${c.id}">✓ Risolvi</button></div>` : ''}`;
   const list = document.getElementById('comment-list');
   if (prepend) list.prepend(t); else list.append(t);
 
-  if (c.x_pct && c.y_pct) {
+  if (c.x_pct != null && c.y_pct != null) {
     pinCount++;
-    const existing = document.getElementById('pin-' + domId);
-    if (!existing) {
+    if (!document.getElementById('pin-' + domId)) {
       const pin = document.createElement('div');
       pin.className = 'pin' + (isActive ? '' : ' resolved');
       pin.id = 'pin-' + domId;
@@ -331,45 +342,52 @@ function renderThread(c, prepend = true) {
   }
 }
 
-// ── INIT: carica progetto + commenti ──
+// ── INIT ──
 (async () => {
-  const [project, comments] = await Promise.all([
-    API.get('projects').then(ps => ps.find(p => p.id === PROJECT_ID) || ps[0]),
+  const [projects, comments] = await Promise.all([
+    API.get('projects'),
     API.get('comments?project_id=' + PROJECT_ID)
   ]);
 
+  const project = projects.find(p => p.id === PROJECT_ID) || projects[0];
+
   if (project) {
+    const siteUrl = /^https?:\/\//.test(project.url) ? project.url : 'https://' + project.url;
     document.title = 'Precision — ' + project.name;
     document.getElementById('project-name').textContent = project.name;
-    document.getElementById('page-title').textContent = project.name;
-    const siteLink = document.getElementById('site-link');
-    siteLink.href = project.url;
-    siteLink.textContent = '↗ ' + project.url.replace('https://','');
-    // Screenshot full-page via microlink JSON API
-    const img = document.getElementById('screenshot-img');
-    img.alt = project.name + ' preview';
-    const siteUrl = /^https?:\/\//.test(project.url) ? project.url : 'https://' + project.url;
-    (async () => {
+    document.getElementById('page-title').textContent   = project.name;
+    const lnk = document.getElementById('site-link');
+    lnk.href = siteUrl;
+    lnk.textContent = '↗ ' + siteUrl.replace('https://','').replace('http://','');
+
+    // Carica sito reale tramite proxy (bypassa X-Frame-Options)
+    iframe.onload = () => {
+      document.getElementById('preview-loading').style.display = 'none';
+      iframe.style.display = 'block';
+      // Espande l'iframe all'altezza reale del sito (no scroll interno)
       try {
-        const r  = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(siteUrl)}&screenshot=true&screenshot.fullPage=true&meta=false`);
-        const ml = await r.json();
-        if (ml.status === 'success' && ml.data?.screenshot?.url) {
-          img.src = ml.data.screenshot.url;
-        } else {
-          throw new Error(ml.message || 'screenshot failed');
-        }
-      } catch (err) {
-        img.outerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;height:100%;min-height:320px;padding:2rem;text-align:center">
-            <div style="font-size:2rem">🌐</div>
-            <div style="font-weight:600;color:var(--tx)">Preview non disponibile</div>
-            <div style="font-size:.8rem;color:var(--tx-muted)">Non è stato possibile generare lo screenshot automatico.</div>
-            <a href="${siteUrl}" target="_blank" rel="noopener" class="btn btn--primary btn--sm">Apri ${siteUrl.replace('https://','').replace('http://','')} ↗</a>
-          </div>`;
+        const doc = iframe.contentWindow.document;
+        const h = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight || 0, 600);
+        iframe.style.height = h + 'px';
+        overlay.style.height = h + 'px';
+      } catch {
+        iframe.style.height = '5000px';
+        overlay.style.height = '5000px';
       }
-    })();
+    };
+    iframe.onerror = () => {
+      document.getElementById('preview-loading').innerHTML =
+        `<div style="text-align:center;padding:2rem">
+           <div style="font-size:1.5rem;margin-bottom:.5rem">⚠️</div>
+           <div style="font-weight:600;color:var(--tx)">Preview non disponibile</div>
+           <div style="font-size:.8rem;color:var(--tx-muted);margin:.5rem 0 1rem">Il sito non è accessibile in anteprima</div>
+           <a href="${siteUrl}" target="_blank" class="btn btn--primary btn--sm">Apri ${siteUrl.replace('https://','').replace('http://','')} ↗</a>
+         </div>`;
+    };
+    iframe.src = `/.netlify/functions/proxy?url=${encodeURIComponent(siteUrl)}`;
   }
 
+  // Commenti
   const list = document.getElementById('comment-list');
   list.innerHTML = '';
   if (!comments.length) {
