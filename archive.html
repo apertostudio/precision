@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width">
+  <title>Precision — Archivio Commenti</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <span class="topbar__logo">Precision</span>
+    <nav class="topbar__nav">
+      <a href="/">Dashboard</a>
+      <a href="/archive" class="active">Archivio</a>
+    </nav>
+    <div class="topbar__avatar">MP</div>
+  </header>
+
+  <main class="content">
+    <div class="flex-c gap-2 mb-3">
+      <h1>Archivio Commenti</h1>
+      <div class="flex-c gap-1 ml-auto">
+        <!-- Filters -->
+        <select class="input" style="width:auto" onchange="filterTable(this.value,'status')">
+          <option value="">Tutti gli stati</option>
+          <option value="Attivo">Attivi</option>
+          <option value="Risolto">Risolti</option>
+        </select>
+        <select class="input" style="width:auto" onchange="filterTable(this.value,'project')">
+          <option value="">Tutti i progetti</option>
+          <option value="Aperto">Aperto Studio</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <table class="tbl" id="archive-table">
+        <thead>
+          <tr>
+            <th>Progetto</th>
+            <th>Pagina</th>
+            <th>Autore</th>
+            <th>Commento</th>
+            <th>Data</th>
+            <th>Stato</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-status="Attivo" data-project="Aperto">
+            <td><strong>Aperto Studio</strong></td>
+            <td>Home</td>
+            <td><div class="flex-c gap-1"><div class="avatar">MP</div> Massimo P.</div></td>
+            <td>Tagline si taglia su mobile a 375px, verificare wrapping</td>
+            <td class="meta">20 apr 2026</td>
+            <td><span class="badge badge--active">Attivo</span></td>
+            <td><a href="/project" class="btn btn--ghost btn--sm">Apri</a></td>
+          </tr>
+          <tr data-status="Attivo" data-project="Aperto">
+            <td><strong>Aperto Studio</strong></td>
+            <td>Storie</td>
+            <td><div class="flex-c gap-1"><div class="avatar">MP</div> Massimo P.</div></td>
+            <td>Card progetti: hover state più marcato</td>
+            <td class="meta">20 apr 2026</td>
+            <td><span class="badge badge--active">Attivo</span></td>
+            <td><a href="/project" class="btn btn--ghost btn--sm">Apri</a></td>
+          </tr>
+          <tr data-status="Attivo" data-project="Aperto">
+            <td><strong>Aperto Studio</strong></td>
+            <td>Contatti</td>
+            <td><div class="flex-c gap-1"><div class="avatar">MP</div> Massimo P.</div></td>
+            <td>Link Instagram e LinkedIn visibili senza scroll</td>
+            <td class="meta">20 apr 2026</td>
+            <td><span class="badge badge--active">Attivo</span></td>
+            <td><a href="/project" class="btn btn--ghost btn--sm">Apri</a></td>
+          </tr>
+          <tr data-status="Risolto" data-project="Aperto">
+            <td><strong>Aperto Studio</strong></td>
+            <td>Studio</td>
+            <td><div class="flex-c gap-1"><div class="avatar">MP</div> Massimo P.</div></td>
+            <td>Descrizione delle 3 unità (Branding, Design, Produzione) leggibile</td>
+            <td class="meta">19 apr 2026</td>
+            <td><span class="badge badge--resolved">Risolto</span></td>
+            <td><a href="/project" class="btn btn--ghost btn--sm">Apri</a></td>
+          </tr>
+          <tr data-status="Risolto" data-project="Aperto">
+            <td><strong>Aperto Studio</strong></td>
+            <td>Home</td>
+            <td><div class="flex-c gap-1"><div class="avatar">MP</div> Massimo P.</div></td>
+            <td>Immagini AVIF ottimizzate e caricate correttamente</td>
+            <td class="meta">19 apr 2026</td>
+            <td><span class="badge badge--resolved">Risolto</span></td>
+            <td><a href="/project" class="btn btn--ghost btn--sm">Apri</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<script>
+function filterTable(val, key) {
+  document.querySelectorAll('#archive-table tbody tr').forEach(row => {
+    const match = !val || row.dataset[key]?.includes(val);
+    row.style.display = match ? '' : 'none';
+  });
+}
+</script>
+<script src="app.js"></script>
+</body>
+</html>

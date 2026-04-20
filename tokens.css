@@ -1,0 +1,39 @@
+:root {
+  /* Surfaces */
+  --bg:       #f7f9fb;
+  --s-low:    #f2f4f6;
+  --s-high:   #e6e8ea;
+  --s-highest:#e0e3e5;
+  --s-white:  #ffffff;
+
+  /* Primary */
+  --primary:  #3d5afe;
+  --on-p:     #ffffff;
+  --p-dim:    #bbc3ff;
+  --p-fixed:  #dee0ff;
+
+  /* Text */
+  --tx:       #191c1e;
+  --tx-sub:   #444656;
+  --tx-muted: #57657a;
+
+  /* States */
+  --active-bg:   #c04500;
+  --active-tx:   #370e00;
+  --resolved-bg: #d5e3fc;
+  --resolved-tx: #57657a;
+
+  /* Misc */
+  --outline:  #c5c5d9;
+  --shadow:   0 12px 32px -4px rgba(25,28,30,.06);
+
+  /* Typography */
+  --f-head: 'Manrope', sans-serif;
+  --f-body: 'Inter', sans-serif;
+
+  /* Radius */
+  --r-sm: .125rem;
+  --r-md: .375rem;
+  --r-lg: .5rem;
+  --r-xl: .75rem;
+}

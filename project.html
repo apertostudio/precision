@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width">
+  <title>Precision — Aperto Studio</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .project-layout { display: grid; grid-template-columns: 220px 1fr 300px; height: calc(100vh - 52px); }
+    .preview-wrap { padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+    .comment-panel { background: var(--s-low); padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: .75rem; }
+    .preview-box { flex: 1; min-height: 520px; padding: 0; overflow: hidden; }
+    .preview-box iframe { width: 100%; height: 100%; min-height: 520px; border: none; border-radius: var(--r-xl); display: block; }
+    .preview-outer { position: relative; flex: 1; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <a href="/" class="topbar__logo" style="text-decoration:none">Precision</a>
+    <nav class="topbar__nav">
+      <a href="/">← Dashboard</a>
+      <span style="color:var(--tx);font-weight:500;margin-left:1rem;font-size:.85rem">Aperto Studio</span>
+    </nav>
+    <div class="flex-c gap-1">
+      <a href="/archive" class="btn btn--ghost btn--sm">Archivio completo</a>
+      <div class="topbar__avatar">MP</div>
+    </div>
+  </header>
+
+  <div class="project-layout">
+
+    <!-- SIDEBAR: struttura sito -->
+    <aside class="sidebar">
+      <div class="sidebar__title">Struttura sito</div>
+      <div class="nav-item active" data-url="https://aperto.studio">
+        <span class="nav-item__dot"></span> Home
+      </div>
+      <div class="nav-item" data-url="https://aperto.studio/#storie">
+        <span class="nav-item__dot"></span> Storie
+      </div>
+      <div class="nav-item" data-url="https://aperto.studio/#studio">
+        <span style="width:6px;height:6px;flex-shrink:0"></span> Studio
+      </div>
+      <div class="nav-item" data-url="https://aperto.studio/#direzione">
+        <span style="width:6px;height:6px;flex-shrink:0"></span> Direzione
+      </div>
+      <div class="nav-item" data-url="https://aperto.studio/#note">
+        <span style="width:6px;height:6px;flex-shrink:0"></span> Note
+      </div>
+      <div class="nav-item" data-url="https://aperto.studio/#contatti">
+        <span class="nav-item__dot resolved"></span> Contatti
+      </div>
+    </aside>
+
+    <!-- PREVIEW -->
+    <section class="preview-wrap">
+      <div class="flex-c gap-1">
+        <h2 id="page-title">Home</h2>
+        <span class="badge badge--active ml-auto">3 commenti aperti</span>
+      </div>
+      <div class="preview-outer card preview-box">
+        <iframe id="site-frame" src="https://aperto.studio" title="Aperto Studio"></iframe>
+        <!-- Pin commenti -->
+        <div class="pin" style="top:12%;left:60%" data-comment="c1" title="Commento 1">1</div>
+        <div class="pin" style="top:38%;left:25%" data-comment="c2" title="Commento 2">2</div>
+        <div class="pin" style="top:65%;right:20%" data-comment="c3" title="Commento 3">3</div>
+      </div>
+      <div class="card flex-c gap-1" style="flex-shrink:0">
+        <span class="label">Aggiungi commento:</span>
+        <input class="input" data-new-comment placeholder="Scrivi e premi Invio…" style="margin-left:.5rem">
+      </div>
+    </section>
+
+    <!-- COMMENTI -->
+    <aside class="comment-panel">
+      <div class="sidebar__title">Commenti</div>
+      <div class="comment-list" style="display:flex;flex-direction:column;gap:.75rem">
+
+        <div class="card thread" id="c1">
+          <div class="thread__header">
+            <div class="avatar">MP</div>
+            <span class="thread__author">Massimo P.</span>
+            <span class="meta ml-auto">30min fa</span>
+            <span class="badge badge--active">Attivo</span>
+          </div>
+          <div class="thread__body">Il tagline "Entra pure, è Aperto" è bellissimo ma su mobile si taglia. Verificare il wrapping a 375px.</div>
+          <div class="thread__actions">
+            <button class="btn btn--ghost btn--sm" data-resolve>✓ Risolvi</button>
+          </div>
+        </div>
+
+        <div class="card thread" id="c2">
+          <div class="thread__header">
+            <div class="avatar">MP</div>
+            <span class="thread__author">Massimo P.</span>
+            <span class="meta ml-auto">1h fa</span>
+            <span class="badge badge--active">Attivo</span>
+          </div>
+          <div class="thread__body">La sezione Storie: le card dei progetti (Tip Tap, Vibly…) potrebbero avere un hover state più marcato.</div>
+          <div class="thread__actions">
+            <button class="btn btn--ghost btn--sm" data-resolve>✓ Risolvi</button>
+          </div>
+        </div>
+
+        <div class="card thread" id="c3">
+          <div class="thread__header">
+            <div class="avatar">MP</div>
+            <span class="thread__author">Massimo P.</span>
+            <span class="meta ml-auto">2h fa</span>
+            <span class="badge badge--active">Attivo</span>
+          </div>
+          <div class="thread__body">Sezione Contatti: aggiungere link diretto al profilo Instagram e LinkedIn visibili senza scroll.</div>
+          <div class="thread__actions">
+            <button class="btn btn--ghost btn--sm" data-resolve>✓ Risolvi</button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+</div>
+<script>
+  // Sidebar nav → cambia iframe e titolo
+  const frame = document.getElementById('site-frame');
+  const title = document.getElementById('page-title');
+  document.querySelectorAll('.nav-item[data-url]').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      frame.src = item.dataset.url;
+      title.textContent = item.textContent.trim();
+    });
+  });
+</script>
+<script src="app.js"></script>
+</body>
+</html>

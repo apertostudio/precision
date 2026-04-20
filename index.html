@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width">
+  <title>Precision — Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <a href="/" class="topbar__logo" style="text-decoration:none">Precision</a>
+    <nav class="topbar__nav">
+      <a href="/">Dashboard</a>
+      <a href="/archive">Archivio</a>
+    </nav>
+    <div class="topbar__avatar">MP</div>
+  </header>
+
+  <main class="content">
+
+    <div class="flex-c gap-2 mb-3">
+      <h1>Progetti</h1>
+      <a href="/project" class="btn btn--primary ml-auto">+ Nuovo progetto</a>
+    </div>
+
+    <div class="card mb-3">
+      <div class="grid grid--3">
+        <div class="stat"><div class="stat__num">1</div><div class="stat__label">Progetto attivo</div></div>
+        <div class="stat"><div class="stat__num">3</div><div class="stat__label">Commenti aperti</div></div>
+        <div class="stat"><div class="stat__num">2</div><div class="stat__label">Risolti</div></div>
+      </div>
+    </div>
+
+    <div class="grid grid--3">
+
+      <a href="/project" class="card project-card">
+        <div class="project-card__thumb" style="background:linear-gradient(135deg,#f5f5f2 0%,#eae9e4 100%);flex-direction:column;gap:.5rem">
+          <span style="font-family:var(--f-head);font-size:1.1rem;font-weight:700;color:#1a1a18;letter-spacing:-.02em">Entra pure,<br>è Aperto.</span>
+          <span style="font-size:.7rem;color:#888;letter-spacing:.05em">aperto.studio</span>
+          <span class="project-card__badge badge badge--active">3 aperti</span>
+        </div>
+        <h3 class="mb-1">Aperto Studio</h3>
+        <div class="label">aperto.studio · aggiornato 30min fa</div>
+        <div class="flex-c gap-1 mt-2">
+          <div class="avatar">MP</div>
+          <span class="badge badge--count ml-auto">1 reviewer</span>
+        </div>
+      </a>
+
+    </div>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
