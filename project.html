@@ -159,12 +159,7 @@
 
         <div id="comment-overlay"></div>
 
-        <img
-          id="screenshot-img"
-          src=""
-          alt="site preview"
-          onerror="this.outerHTML='<div style=\'padding:2rem;text-align:center;color:var(--tx-muted)\'>Preview non disponibile — <a id=\'site-fallback\' href=\'#\' target=\'_blank\'>apri il sito ↗</a></div>'"
-        >
+        <img id="screenshot-img" alt="site preview" style="width:100%;height:auto;display:block">
 
         <div class="comment-popup" id="comment-popup">
           <div style="font-size:.75rem;font-weight:600;color:var(--tx-muted);margin-bottom:.5rem">Nuovo commento</div>
@@ -350,10 +345,13 @@ function renderThread(c, prepend = true) {
     const siteLink = document.getElementById('site-link');
     siteLink.href = project.url;
     siteLink.textContent = '↗ ' + project.url.replace('https://','');
-    // Screenshot full-page via microlink
+    // Screenshot via microlink — setta onerror PRIMA di src
     const img = document.getElementById('screenshot-img');
     img.alt = project.name + ' preview';
-    img.src = `https://api.microlink.io/?url=${encodeURIComponent(project.url)}&screenshot=true&screenshot.fullPage=true&meta=false&embed=screenshot.url`;
+    img.onerror = () => {
+      img.outerHTML = `<div style="padding:2rem;text-align:center;color:var(--tx-muted)">Preview non disponibile — <a href="${project.url}" target="_blank">apri il sito ↗</a></div>`;
+    };
+    img.src = `https://api.microlink.io/?url=${encodeURIComponent(project.url)}&screenshot=true&meta=false&embed=screenshot.url`;
   }
 
   const list = document.getElementById('comment-list');
