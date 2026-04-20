@@ -88,8 +88,9 @@ function closeModal() { document.getElementById('modal-bg').classList.remove('op
 
 async function createProject() {
   const name = document.getElementById('new-name').value.trim();
-  const url  = document.getElementById('new-url').value.trim();
+  let   url  = document.getElementById('new-url').value.trim();
   if (!name || !url) return;
+  if (!/^https?:\/\//.test(url)) url = 'https://' + url;
   const btn = document.getElementById('btn-create');
   btn.disabled = true; btn.textContent = '…';
   const p = await API.post('projects', { name, url });

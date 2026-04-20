@@ -12,7 +12,8 @@ exports.handler = async (event) => {
   }
 
   if (httpMethod === 'POST') {
-    const { name, url } = JSON.parse(body);
+    const { name, url: rawUrl } = JSON.parse(body);
+    const url = /^https?:\/\//.test(rawUrl) ? rawUrl : 'https://' + rawUrl;
     const [row] = await sql`INSERT INTO projects (name, url) VALUES (${name}, ${url}) RETURNING *`;
     return ok(row, 201);
   }

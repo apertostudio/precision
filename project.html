@@ -345,13 +345,29 @@ function renderThread(c, prepend = true) {
     const siteLink = document.getElementById('site-link');
     siteLink.href = project.url;
     siteLink.textContent = '↗ ' + project.url.replace('https://','');
-    // Screenshot via microlink — setta onerror PRIMA di src
+    // Screenshot full-page via microlink JSON API
     const img = document.getElementById('screenshot-img');
     img.alt = project.name + ' preview';
-    img.onerror = () => {
-      img.outerHTML = `<div style="padding:2rem;text-align:center;color:var(--tx-muted)">Preview non disponibile — <a href="${project.url}" target="_blank">apri il sito ↗</a></div>`;
-    };
-    img.src = `https://api.microlink.io/?url=${encodeURIComponent(project.url)}&screenshot=true&meta=false&embed=screenshot.url`;
+    const siteUrl = /^https?:\/\//.test(project.url) ? project.url : 'https://' + project.url;
+    (async () => {
+      try {
+        const r  = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(siteUrl)}&screenshot=true&screenshot.fullPage=true&meta=false`);
+        const ml = await r.json();
+        if (ml.status === 'success' && ml.data?.screenshot?.url) {
+          img.src = ml.data.screenshot.url;
+        } else {
+          throw new Error(ml.message || 'screenshot failed');
+        }
+      } catch (err) {
+        img.outerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;height:100%;min-height:320px;padding:2rem;text-align:center">
+            <div style="font-size:2rem">🌐</div>
+            <div style="font-weight:600;color:var(--tx)">Preview non disponibile</div>
+            <div style="font-size:.8rem;color:var(--tx-muted)">Non è stato possibile generare lo screenshot automatico.</div>
+            <a href="${siteUrl}" target="_blank" rel="noopener" class="btn btn--primary btn--sm">Apri ${siteUrl.replace('https://','').replace('http://','')} ↗</a>
+          </div>`;
+      }
+    })();
   }
 
   const list = document.getElementById('comment-list');
